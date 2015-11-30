@@ -15,9 +15,12 @@
  */
 package org.b3log.solo.repository.impl;
 
+import java.sql.Connection;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+
 import org.b3log.latke.Keys;
 import org.b3log.latke.logging.Level;
 import org.b3log.latke.logging.Logger;
@@ -29,6 +32,8 @@ import org.b3log.latke.repository.Query;
 import org.b3log.latke.repository.RepositoryException;
 import org.b3log.latke.repository.SortDirection;
 import org.b3log.latke.repository.annotation.Repository;
+import org.b3log.latke.repository.jdbc.JDBCRepositoryException;
+import org.b3log.latke.repository.jdbc.util.JdbcUtil;
 import org.b3log.latke.util.CollectionUtils;
 import org.b3log.solo.model.Article;
 import org.b3log.solo.repository.ArticleRepository;
@@ -259,4 +264,48 @@ public class ArticleRepositoryImpl extends AbstractRepository implements Article
 
         return ret;
     }
+
+	@Override
+	public List<JSONObject> get(int pageCount, int pageSize) throws RepositoryException { 
+		
+	        final Query query = new Query().setFilter(CompositeFilterOperator.and()).
+	                addSort("oId", SortDirection.ASCENDING).setPageCount(pageCount).setPageSize(pageSize)
+	                 ;
+
+	        final JSONObject result = get(query);
+	        final JSONArray array = result.optJSONArray(Keys.RESULTS);
+	        
+	        final List<JSONObject> ret = new ArrayList<JSONObject>(); 
+	        
+	        try {
+	        	 for(int i = 0 ;i < array.length(); i++)
+	 	        	ret.add((JSONObject)array.get(i)); 
+	        } catch (final JSONException e) {
+	            throw new RepositoryException(e);
+	        } 
+	        
+	        return ret;
+	}
+
+	@Override
+	public List<JSONObject> getLatest(int articleId) throws RepositoryException { 
+		
+	        final Query query = new Query().setFilter(CompositeFilterOperator.and( 
+	                new PropertyFilter("oId", FilterOperator.GREATER_THAN, true))).
+	                addSort("oId", SortDirection.ASCENDING) ;
+
+	        final JSONObject result = get(query);
+	        final JSONArray array = result.optJSONArray(Keys.RESULTS); 
+	        
+	        final List<JSONObject> ret = new ArrayList<JSONObject>(); 
+	        
+	        try {
+	        	 for(int i = 0 ;i < array.length(); i++)
+	 	        	ret.add((JSONObject)array.get(i)); 
+	        } catch (final JSONException e) {
+	            throw new RepositoryException(e);
+	        } 
+	        
+	        return ret;
+	}
 }

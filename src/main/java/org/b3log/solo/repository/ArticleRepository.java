@@ -130,4 +130,18 @@ public interface ArticleRepository extends Repository {
      * @throws RepositoryException repository exception
      */
     boolean isPublished(final String articleId) throws RepositoryException;
+    
+    
+    /** 
+     * Query by pageCount and pageSize, corresponding to "limit pageCount*pageSize, pageSize"
+     */
+    List<JSONObject> get(final int pageCount, final int pageSize)  throws RepositoryException;
+    
+    /**
+     *  Query latest articles after specified articleId.
+     *  <b>Note:</b> this method will return all matched records,
+     *  so please make sure the result scale is small before you
+     *  call it. 
+     */
+    List<JSONObject> getLatest(final int articleId)  throws RepositoryException;
 }

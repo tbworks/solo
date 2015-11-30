@@ -19,10 +19,12 @@ import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
 import java.util.*;
+
 import javax.inject.Inject;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
+
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.time.DateFormatUtils;
 import org.b3log.latke.Keys;
@@ -53,6 +55,7 @@ import org.b3log.latke.util.Stopwatchs;
 import org.b3log.latke.util.Strings;
 import org.b3log.solo.SoloServletListener;
 import org.b3log.solo.event.EventTypes;
+import org.b3log.solo.memsearcher.Searcher;
 import org.b3log.solo.model.*;
 import org.b3log.solo.processor.renderer.ConsoleRenderer;
 import org.b3log.solo.processor.util.Filler;
@@ -145,6 +148,9 @@ public class ArticleProcessor {
     @Inject
     private EventManager eventManager;
 
+    
+    private Searcher searcher = Searcher.getInstance(); 
+    
     /**
      * Shows the article view password form.
      *
@@ -248,6 +254,42 @@ public class ArticleProcessor {
         }
     }
 
+    /**
+     * For fuzzy search.
+     */
+    @RequestProcessing(value = "/search-articles.do", method = HTTPRequestMethod.POST)
+    public void getArticlesBySearch(final HTTPRequestContext context) throws Exception {
+        final JSONObject jsonObject = new JSONObject();
+
+        final JSONObject preference = preferenceQueryService.getPreference();
+        final int displayCnt = preference.getInt(Option.ID_C_RANDOM_ARTICLES_DISPLAY_CNT);
+
+        if (0 == displayCnt) {
+            jsonObject.put(Common.ARTICLES_WITH_CONDITION, new ArrayList<JSONObject>());
+
+            final JSONRenderer renderer = new JSONRenderer();
+
+            context.setRenderer(renderer);
+            renderer.setJSONObject(jsonObject);
+
+            return;
+        } 
+        final String condition = context.getRequest().getParameter("condition");
+        
+        Stopwatchs.start("Get Searched Articles.");
+        
+        final List<JSONObject> randomArticles =  searcher.search(condition) ;
+
+        jsonObject.put(Common.ARTICLES_WITH_CONDITION, randomArticles);
+
+        final JSONRenderer renderer = new JSONRenderer();
+
+        context.setRenderer(renderer);
+        renderer.setJSONObject(jsonObject);
+
+        Stopwatchs.end();
+    }
+    
     /**
      * Gets random articles with the specified context.
      *

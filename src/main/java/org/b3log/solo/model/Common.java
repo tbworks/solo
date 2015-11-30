@@ -324,6 +324,12 @@ public final class Common {
      * Key of Gravatar.
      */
     public static final String GRAVATAR = "gravatar";
+    
+    
+    /**
+     * Key of searched articles.
+     */
+    public static final String ARTICLES_WITH_CONDITION = "searchArticles";
 
     /**
      * Private default constructor.
