@@ -144,4 +144,14 @@ public interface ArticleRepository extends Repository {
      *  call it. 
      */
     List<JSONObject> getLatest(final int articleId)  throws RepositoryException;
+    
+    
+    /**
+     *  Query latest articles after specified articleId.
+     *  <b>Note:</b> this method will return all matched records,
+     *  so please make sure the result scale is small before you
+     *  call it. 
+     */
+    List<JSONObject> getByIds(final List<Long> ids)  throws RepositoryException;
+    
 }

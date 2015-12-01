@@ -257,7 +257,7 @@ public class ArticleProcessor {
     /**
      * For fuzzy search.
      */
-    @RequestProcessing(value = "/search-articles.do", method = HTTPRequestMethod.POST)
+    @RequestProcessing(value = "/search-articles")
     public void getArticlesBySearch(final HTTPRequestContext context) throws Exception {
         final JSONObject jsonObject = new JSONObject();
 
@@ -278,7 +278,7 @@ public class ArticleProcessor {
         
         Stopwatchs.start("Get Searched Articles.");
         
-        final List<JSONObject> randomArticles =  searcher.search(condition) ;
+        final List<JSONObject> randomArticles =  articleQueryService.fuzzyGetArticles(condition) ;
 
         jsonObject.put(Common.ARTICLES_WITH_CONDITION, randomArticles);
 

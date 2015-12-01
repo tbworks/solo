@@ -20,6 +20,7 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.Timer;
 
 import org.b3log.latke.Keys;
 import org.b3log.latke.logging.Level;
@@ -35,6 +36,7 @@ import org.b3log.latke.repository.annotation.Repository;
 import org.b3log.latke.repository.jdbc.JDBCRepositoryException;
 import org.b3log.latke.repository.jdbc.util.JdbcUtil;
 import org.b3log.latke.util.CollectionUtils;
+import org.b3log.solo.memsearcher.MemStorage;
 import org.b3log.solo.model.Article;
 import org.b3log.solo.repository.ArticleRepository;
 import org.json.JSONArray;
@@ -65,8 +67,8 @@ public class ArticleRepositoryImpl extends AbstractRepository implements Article
      * Public constructor.
      */
     public ArticleRepositoryImpl() {
-        super(Article.ARTICLE);
-    }
+        super(Article.ARTICLE);  
+    } 
 
     @Override
     public JSONObject getByAuthorEmail(final String authorEmail, final int currentPageNum, final int pageSize)
@@ -268,9 +270,15 @@ public class ArticleRepositoryImpl extends AbstractRepository implements Article
 	@Override
 	public List<JSONObject> get(int pageCount, int pageSize) throws RepositoryException { 
 		
-	        final Query query = new Query().setFilter(CompositeFilterOperator.and()).
-	                addSort("oId", SortDirection.ASCENDING).setPageCount(pageCount).setPageSize(pageSize)
-	                 ;
+	        final Query query = new Query()
+	        		.addProjection("oId", Integer.class)
+	                .addProjection(Article.ARTICLE_TITLE, Integer.class)
+	                .addProjection(Article.ARTICLE_TAGS_REF, Integer.class)
+	                .addProjection(Article.ARTICLE_ABSTRACT, String.class) 
+	                .addSort("oId", SortDirection.ASCENDING)
+	                .setPageCount(pageCount)
+	                .setPageSize(pageSize)
+	                ;
 
 	        final JSONObject result = get(query);
 	        final JSONArray array = result.optJSONArray(Keys.RESULTS);
@@ -290,9 +298,34 @@ public class ArticleRepositoryImpl extends AbstractRepository implements Article
 	@Override
 	public List<JSONObject> getLatest(int articleId) throws RepositoryException { 
 		
-	        final Query query = new Query().setFilter(CompositeFilterOperator.and( 
-	                new PropertyFilter("oId", FilterOperator.GREATER_THAN, true))).
-	                addSort("oId", SortDirection.ASCENDING) ;
+	        final Query query = new Query().setFilter( new PropertyFilter("oId", FilterOperator.GREATER_THAN, articleId)) 
+	                .addProjection("oId", Integer.class)
+	                .addProjection(Article.ARTICLE_TITLE, Integer.class)
+	                .addProjection(Article.ARTICLE_TAGS_REF, Integer.class)
+	                .addProjection(Article.ARTICLE_ABSTRACT, String.class)
+	                .addSort("oId", SortDirection.ASCENDING)
+	                ;
+
+	        final JSONObject result = get(query);
+	        final JSONArray array = result.optJSONArray(Keys.RESULTS); 
+	        
+	        final List<JSONObject> ret = new ArrayList<JSONObject>(); 
+	        
+	        try {
+	        	 for(int i = 0 ;i < array.length(); i++)
+	 	        	ret.add((JSONObject)array.get(i)); 
+	        } catch (final JSONException e) {
+	            throw new RepositoryException(e);
+	        } 
+	        
+	        return ret;
+	}
+
+	@Override
+	public List<JSONObject> getByIds(List<Long> ids) throws RepositoryException {
+		 	
+		    final Query query = new Query().setFilter(new PropertyFilter("oId", FilterOperator.IN, ids))
+	                .addSort("oId", SortDirection.ASCENDING) ;
 
 	        final JSONObject result = get(query);
 	        final JSONArray array = result.optJSONArray(Keys.RESULTS); 

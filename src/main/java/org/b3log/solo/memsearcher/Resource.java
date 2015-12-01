@@ -33,7 +33,7 @@ public class Resource<T> {
 	private final List<String> words = new ArrayList<String>();
 
 	/**
-	 * use to binary search.
+	 * use for binary search.
 	 */
 	private char [] charPool;
 	
@@ -79,7 +79,5 @@ public class Resource<T> {
 		return sb.toString();
 	}
 	
-
-	
-	 
+ 
 }

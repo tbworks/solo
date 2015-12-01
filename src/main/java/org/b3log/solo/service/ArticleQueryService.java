@@ -23,9 +23,12 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+
 import javax.inject.Inject;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
+
+import org.apache.commons.lang.StringUtils;
 import org.b3log.latke.Keys;
 import org.b3log.latke.logging.Level;
 import org.b3log.latke.logging.Logger;
@@ -40,8 +43,11 @@ import org.b3log.latke.util.CollectionUtils;
 import org.b3log.latke.util.Paginator;
 import org.b3log.latke.util.Stopwatchs;
 import org.b3log.latke.util.Strings;
+import org.b3log.solo.memsearcher.Searcher;
 import org.b3log.solo.model.Article;
+
 import static org.b3log.solo.model.Article.*;
+
 import org.b3log.solo.model.Common;
 import org.b3log.solo.model.Option;
 import org.b3log.solo.model.Sign;
@@ -127,6 +133,12 @@ public class ArticleQueryService {
     @Inject
     private LangPropsService langPropsService;
 
+    
+    /**
+     * Simple fuzzy search engine.
+     */
+    private static Searcher searcher = Searcher.getInstance();
+    
     /**
      * Can the current user access an article specified by the given article id?
      *
@@ -152,6 +164,23 @@ public class ArticleQueryService {
         }
 
         return true;
+    }
+    
+    /** fuzzy get articles.
+     * @param condition
+     * @return Articles in JSON
+     * @throws ServiceException
+     */
+    public List<JSONObject> fuzzyGetArticles(String condition) throws ServiceException
+    {
+    	if(StringUtils.isEmpty(condition)) return new ArrayList<JSONObject>();
+    	List<Long> ids = searcher.search(condition); 
+    	try {
+    		return articleRepository.getByIds(ids);
+        } catch (final Exception e) {
+            LOGGER.log(Level.ERROR, e.getMessage(), e);
+            throw new ServiceException(String.format("Search by [Condition=%s] failed. detailed message: %s", condition, e.getMessage()));
+        } 
     }
 
     /**

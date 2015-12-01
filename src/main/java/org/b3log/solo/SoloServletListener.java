@@ -16,11 +16,13 @@
 package org.b3log.solo;
 
 import java.util.ResourceBundle;
+
 import javax.servlet.ServletContextEvent;
 import javax.servlet.ServletRequestEvent;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
 import javax.servlet.http.HttpSessionEvent;
+
 import org.b3log.latke.Keys;
 import org.b3log.latke.Latkes;
 import org.b3log.latke.event.EventManager;
@@ -41,6 +43,7 @@ import org.b3log.solo.event.plugin.PluginRefresher;
 import org.b3log.solo.event.rhythm.ArticleSender;
 import org.b3log.solo.event.rhythm.ArticleUpdater;
 import org.b3log.solo.event.symphony.CommentSender;
+import org.b3log.solo.memsearcher.MemStorage;
 import org.b3log.solo.model.Option;
 import org.b3log.solo.model.Skin;
 import org.b3log.solo.repository.OptionRepository;
@@ -148,6 +151,9 @@ public final class SoloServletListener extends AbstractServletListener {
 
         LOGGER.info("Solo is running [" + Latkes.getServePath() + "]");
 
+
+        MemStorage.getInstance().startRefreshCyclicTask(); 
+        
         Stopwatchs.end();
         LOGGER.log(Level.DEBUG, "Stopwatch: {0}{1}", Strings.LINE_SEPARATOR, Stopwatchs.getTimingStat());
     }
