@@ -3,8 +3,12 @@ package org.b3log.solo.memsearcher;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
+import org.apache.commons.lang.StringUtils;
+import org.b3log.latke.util.CollectionUtils;
 import org.json.JSONObject;
 
 
@@ -77,54 +81,67 @@ public class Searcher {
 		
 		if(condition == null || condition.isEmpty()) return result;
 		
-		List<Long> result_find_by_keywords = searchByKeywords(condition, MAX_RESULT_SIZE);
+		Set<Long> result_find_by_keywords = searchByKeywords(condition, MAX_RESULT_SIZE);
 		
 		int left_size = MAX_RESULT_SIZE - ( result_find_by_keywords == null ? 0 : result_find_by_keywords.size() );
 		
-		List<Long> result_find_by_content = searchByContent(condition, left_size);
+		List<Long> result_find_by_content = searchByContent(condition, left_size, result_find_by_keywords);
 		
 		result.addAll(result_find_by_keywords);
 		result.addAll(result_find_by_content); 
 		return result; 
 	}
 
-	private List<Long> searchByKeywords(String condition, int max_size)
+	private Set<Long> searchByKeywords(String condition, int max_size)
 	{
-		List<Long> result = new ArrayList<Long>();
+		Set<Long> result = new HashSet<Long>();
 		if( memdb.getResList() == null ) return result; 
 		int left_count = max_size;
 		for( Resource<Long> item : memdb.getResList() )
 		{
-			if(item.getWords() == null ) continue; 
-			for(String word : item.getWords())
-			{
-				if(word.contains(condition) &&  left_count-- > 0)
-					result.add(item.getCandidate());
-			} 
+			if(matchWithKeywords(item.getWords(), condition))
+				result.add(item.getCandidate()); 
 		}
 		return result;
 	}
-	
-	private List<Long> searchByContent(String condition, int max_size)
+	 
+	private List<Long> searchByContent(String condition, int max_size, Set<Long> lastResult)
 	{
 		List<TempResult> result = new ArrayList<TempResult>(); 
 		if( memdb.getResList() == null ) return getTrueResult(result); 
 		int left_count = max_size;
 		for( Resource<Long> item : memdb.getResList() )
 		{
-			if( item.charPool() == null ) continue; 
-			int matched_size = 0;
-			for(int i = 0; i< condition.length(); i++)
-			{ 
-				if(SearchCommon.findCharInArray(condition.charAt(i),  item.charPool()) >= 0)
-				{
-					matched_size ++;
-				} 
-			}
-			result.add( new TempResult(item.getCandidate(), matched_size));
+			int matched_count = countMatchedCountWithContent(item.charPool(), condition);
+			if( matched_count > 0 && !lastResult.contains(item.getCandidate()) && left_count -- > 0)
+				result.add( new TempResult(item.getCandidate(), matched_count));
 		}
 		Collections.sort(result); 
 		return getTrueResult(result);
+	}
+	 
+	private boolean matchWithKeywords(List<String> words, String condition)
+	{
+		if(words == null ) return false;  
+		for(String word : words)
+		{
+			if(word.contains(condition))
+				return true; 
+		} 
+		return false;
+	}
+	
+	private int countMatchedCountWithContent(char [] charPool, String condition){
+		if( charPool == null || charPool.length ==0 ) return 0;  
+		int matched_size = 0;
+		for(int i = 0; i< condition.length(); i++)
+		{ 
+			if(SearchCommon.findCharInArray(condition.charAt(i), charPool) >= 0)
+			{
+				matched_size ++;
+			} 
+		}
+		return matched_size;
 	}
 	
 	private List<Long> getTrueResult(List<TempResult> list)
