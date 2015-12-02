@@ -28,13 +28,7 @@
         <description>Online Visitor Refresher</description>
         <schedule>every 60 minutes</schedule>
     </cron>
-    
-    <cron>
-        <url>/console/stat/onlineVisitorRefresh</url>
-        <description>Online Visitor Refresher</description>
-        <schedule>every 60 minutes</schedule>
-    </cron>
-    
+   
     <cron>
         <url>/blog/symphony/user</url>
         <description>Sync user to http://hacpai.com</description>
